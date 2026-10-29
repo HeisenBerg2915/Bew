@@ -60,19 +60,6 @@ async def connect(bot: Bot, update):
         await update.reply_text(f"Make Sure Im Admin At <code>{target}</code> And Have Permission For <i>Inviting Users via Link</i> And Try Again.....!!!\n\n<i><b>Error Logged:</b></i> <code>{e}</code>", parse_mode='html')
         return
     
-    userbot_info = await bot.USER.get_me()
-    
-    # Joins to targeted chat using above exported invite link
-    # If aldready joined, code just pass on to next code
-    try:
-        await bot.USER.join_chat(join_link)
-    except UserAlreadyParticipant:
-        pass
-    except Exception as e:
-        logger.exception(e, exc_info=True)
-        await update.reply_text(f"{userbot_info.mention} Couldnt Join The Channel <code>{target}</code> Make Sure Userbot Is Not Banned There Or Add It Manually And Try Again....!!\n\n<i><b>Error Logged:</b></i> <code>{e}</code>", parse_mode='html')
-        return
-    
     try:
         c_chat = await bot.get_chat(target)
         channel_id = c_chat.id
