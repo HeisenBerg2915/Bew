@@ -11,7 +11,62 @@ from bot.database import Database # pylint: disable=import-error
 from bot.plugins.auto_filter import recacher # pylint: disable=import-error
 
 db = Database()
-logger = LOGGER(__name__)                   
+logger = LOGGER(__name__) 
+
+@Client.on_message(filters.command(["add"]) & filters.group, group=1)
+async def connect(bot: Bot, update):
+    chat_id = update.chat.id
+    user_id = update.from_user.id if update.from_user else None
+    global VERIFY
+
+    if VERIFY.get(str(chat_id)) is None:
+        admin_list = []
+        async for member in bot.get_chat_members(
+            chat_id=chat_id,
+            filter=enums.ChatMembersFilter.ADMINISTRATORS
+        ):
+            admin_list.append(member.user.id)
+
+        admin_list.append(None)
+        VERIFY[str(chat_id)] = admin_list
+
+    if user_id not in VERIFY.get(str(chat_id), []):
+        return
+
+    args = (update.text or "").split(maxsplit=1)
+
+    if len(args) < 2:
+        await update.reply_text(
+            "Usage: /add @ChannelUsername"
+        )
+        return
+
+    target = args[1].strip()
+
+    try:
+        channel = await bot.get_chat(target)
+    except Exception as e:
+        await update.reply_text(
+            f"Please add the bot to the channel as admin first.\n\nError: {e}"
+        )
+        return
+
+    channel_id = channel.id
+    channel_name = channel.title or target
+
+    if await db.in_db(chat_id, channel_id):
+        await update.reply_text(
+            "This channel is already connected."
+        )
+        return
+
+    await db.add_chat(chat_id, channel_id, channel_name)
+    await recacher(chat_id, True, True, bot, update)
+
+    await update.reply_text(
+        f"Channel connected: <code>{channel_name}</code>\n\n"
+        "Only new files posted after connecting will be indexed."
+    )
                     
 @Client.on_message(filters.command(["del"]) & filters.group, group=1)
 async def disconnect(bot: Bot, update):
