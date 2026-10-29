@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: adv-auto-filter-bot-v2
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m bot
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ID
+        sync: false
+      - key: API_HASH
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: DB_URI
+        sync: false
